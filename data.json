@@ -1,0 +1,17 @@
+{
+  "customers": [
+    { "id": "c_cs", "name": "Česká spořitelna", "machines": [] },
+    { "id": "c_csob", "name": "ČSOB", "machines": [] },
+    { "id": "c_kb", "name": "Komerční banka", "machines": [] },
+    { "id": "c_uc", "name": "UniCredit Bank", "machines": [] },
+    { "id": "c_rb", "name": "Raiffeisenbank", "machines": [] },
+    { "id": "c_moneta", "name": "MONETA Money Bank", "machines": [] },
+    { "id": "c_fio", "name": "Fio banka", "machines": [] },
+    { "id": "c_air", "name": "Air Bank", "machines": [] },
+    { "id": "c_mbank", "name": "mBank", "machines": [] },
+    { "id": "c_trinity", "name": "Trinity Bank", "machines": [] },
+    { "id": "c_posta", "name": "Česká pošta", "machines": [] },
+    { "id": "c_brinks", "name": "Brinks", "machines": [] },
+    { "id": "c_loomis", "name": "Loomis", "machines": [] }
+  ]
+}

@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Servisní navigátor</title>
+<style>
+  :root{
+    --ink:#1C2333;
+    --ink-soft:#4B5566;
+    --bg:#F3F5F4;
+    --surface:#FFFFFF;
+    --border:#DBE1E1;
+    --accent:#2D6E7E;
+    --accent-dark:#204F5B;
+    --accent-2:#C4632B;
+    --danger:#B23B3B;
+    --radius:10px;
+    font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);min-height:100vh;}
+  header{
+    background:var(--ink);color:#fff;padding:16px 20px;
+    display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;
+    position:sticky;top:0;z-index:5;
+  }
+  header h1{margin:0;font-size:18px;font-weight:600;}
+  header .sub{color:#B7C4C4;font-size:12.5px;margin-top:2px;}
+  .header-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  button{font-family:inherit;cursor:pointer;border-radius:8px;border:1px solid transparent;
+    padding:9px 14px;font-size:14px;font-weight:500;transition:background .15s ease,border-color .15s ease;}
+  .btn-ghost{background:transparent;border-color:#4C5A6B;color:#fff;}
+  .btn-ghost:hover{background:#2B3648;}
+  .btn-accent{background:var(--accent);color:#fff;}
+  .btn-accent:hover{background:var(--accent-dark);}
+  .btn-outline{background:#fff;border-color:var(--border);color:var(--ink);}
+  .btn-outline:hover{border-color:var(--accent);color:var(--accent-dark);}
+  .btn-danger{background:#fff;border-color:var(--danger);color:var(--danger);}
+  .btn-danger:hover{background:var(--danger);color:#fff;}
+  .btn-small{padding:5px 10px;font-size:12.5px;}
+  main{max-width:1100px;margin:0 auto;padding:22px 18px 60px;}
+  .crumbs{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--ink-soft);margin-bottom:18px;flex-wrap:wrap;}
+  .crumbs button{background:none;border:none;padding:2px 4px;font-size:14px;color:var(--accent-dark);font-weight:600;}
+  .crumbs button:hover{text-decoration:underline;}
+  .crumbs .sep{color:#B6BFC6;}
+  .crumbs .current{color:var(--ink);font-weight:600;}
+  .toolbar{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;}
+  .search{flex:1;min-width:200px;padding:11px 14px;border-radius:8px;border:1px solid var(--border);font-size:16px;background:#fff;}
+  .search:focus{outline:2px solid var(--accent);outline-offset:1px;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;}
+  .tile{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    padding:18px 16px;cursor:pointer;text-align:left;position:relative;display:flex;flex-direction:column;gap:6px;min-height:88px;}
+  .tile:hover{border-color:var(--accent);box-shadow:0 2px 10px rgba(45,110,126,.12);}
+  .tile-name{font-size:15.5px;font-weight:600;color:var(--ink);}
+  .tile-meta{font-size:12.5px;color:var(--ink-soft);}
+  .tile-edit-row{position:absolute;top:8px;right:8px;display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;}
+  .doc-list{display:flex;flex-direction:column;gap:10px;}
+  .doc-row{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    padding:14px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+  .doc-tag{font-size:11.5px;font-weight:700;padding:4px 9px;border-radius:999px;white-space:nowrap;color:#fff;}
+  .tag-manual{background:var(--accent);}
+  .tag-software{background:var(--accent-2);}
+  .tag-other{background:#7A7F8C;}
+  .doc-label{flex:1;font-size:14.5px;font-weight:500;min-width:120px;}
+  .doc-link{font-size:13.5px;color:var(--accent-dark);font-weight:600;text-decoration:none;
+    padding:7px 12px;border:1px solid var(--accent);border-radius:7px;}
+  .doc-link:hover{background:var(--accent);color:#fff;}
+  .doc-actions{display:flex;gap:6px;}
+  .empty{padding:36px 18px;text-align:center;color:var(--ink-soft);border:1px dashed var(--border);border-radius:var(--radius);background:#fff;}
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:16px;}
+  .panel h3{margin:0 0 10px;font-size:14px;color:var(--ink-soft);font-weight:600;}
+  .form-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
+  .form-row input, .form-row select{flex:1;min-width:140px;padding:9px 11px;border-radius:7px;border:1px solid var(--border);font-size:14px;font-family:inherit;}
+  .admin-banner{background:#FFF4E9;border:1px solid #EBC79A;color:#7A4A16;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:16px;}
+  .status-line{font-size:12.5px;color:var(--ink-soft);margin-top:8px;}
+  .status-ok{color:#1E7A46;}
+  .status-err{color:var(--danger);}
+  footer{text-align:center;color:var(--ink-soft);font-size:12px;padding:20px;}
+
+  #gate{
+    position:fixed;inset:0;background:var(--ink);color:#fff;
+    display:flex;align-items:center;justify-content:center;padding:24px;z-index:50;
+  }
+  #gate .box{max-width:340px;width:100%;text-align:center;}
+  #gate h2{margin:0 0 6px;font-size:19px;}
+  #gate p{color:#B7C4C4;font-size:13.5px;margin:0 0 18px;}
+  #gate input{width:100%;padding:12px 14px;border-radius:8px;border:1px solid #4C5A6B;background:#232D40;color:#fff;font-size:16px;margin-bottom:10px;}
+  #gate button{width:100%;padding:12px;}
+  #gateError{color:#F0A0A0;font-size:13px;min-height:18px;margin-top:6px;}
+  @media (max-width:520px){ header{padding:12px 14px;} main{padding:16px 12px 50px;} }
+</style>
+</head>
+<body>
+
+<div id="gate">
+  <div class="box">
+    <h2>Servisní navigátor</h2>
+    <p>Zadej přístupový kód pro techniky</p>
+    <input id="gateInput" type="password" placeholder="Přístupový kód" autocomplete="off">
+    <button class="btn-accent" id="gateBtn">Vstoupit</button>
+    <div id="gateError"></div>
+  </div>
+</div>
+
+<header>
+  <div>
+    <h1>Servisní navigátor</h1>
+    <div class="sub" id="headerSub">Zákazník → zařízení → manuál / SW</div>
+  </div>
+  <div class="header-actions">
+    <button class="btn-accent" id="adminToggle">Přihlásit správu</button>
+  </div>
+</header>
+
+<main>
+  <div id="adminBanner" style="display:none" class="admin-banner"></div>
+  <div class="crumbs" id="crumbs"></div>
+  <div class="toolbar"><input class="search" id="searchBox" type="text" placeholder="Hledat zákazníka nebo zařízení…"></div>
+  <div id="content"></div>
+</main>
+
+<footer>Data se načítají z data.json v tomto repozitáři. Odkazy vedou na OneDrive.</footer>
+
+<script>
+(function(){
+  // ---- access gate ----
+  const TEAM_HASH  = "e00eeed73956460a991fa9bdbca0416d52d979ccea8772126536b36ed8d95375"; // servis2026
+  const ADMIN_HASH = "243ec68ce1e6a6e1ad311cdbb803a5bbc965a667eefd493b99b4225b6de9fed1"; // admin password
+
+  async function sha256(text){
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+  }
+
+  const gate = document.getElementById('gate');
+  const gateInput = document.getElementById('gateInput');
+  const gateBtn = document.getElementById('gateBtn');
+  const gateError = document.getElementById('gateError');
+
+  async function tryGate(){
+    const hash = await sha256(gateInput.value);
+    if(hash === TEAM_HASH){
+      sessionStorage.setItem('sn_team_ok','1');
+      gate.style.display = 'none';
+      boot();
+    } else {
+      gateError.textContent = 'Špatný kód, zkus to znovu.';
+    }
+  }
+  gateBtn.addEventListener('click', tryGate);
+  gateInput.addEventListener('keydown', e => { if(e.key === 'Enter') tryGate(); });
+
+  if(sessionStorage.getItem('sn_team_ok') === '1'){
+    gate.style.display = 'none';
+    boot();
+  }
+
+  // ---- main app ----
+  function boot(){
+    let data = { customers: [] };
+    let state = { view:'home', customerId:null, machineId:null, search:'' };
+    let adminMode = false;
+    let github = { owner:'', repo:'', token:'', path:'data.json', sha:'' };
+
+    const contentEl = document.getElementById('content');
+    const crumbsEl = document.getElementById('crumbs');
+    const searchBox = document.getElementById('searchBox');
+    const headerSub = document.getElementById('headerSub');
+    const adminBanner = document.getElementById('adminBanner');
+    const adminToggleBtn = document.getElementById('adminToggle');
+
+    // restore GitHub connection settings for this browser tab only (not the token — that's asked each session)
+    try{
+      const cached = JSON.parse(sessionStorage.getItem('sn_gh_cfg') || '{}');
+      github.owner = cached.owner || '';
+      github.repo = cached.repo || '';
+    } catch(e){}
+
+    function uid(prefix){ return prefix + '_' + Math.random().toString(36).slice(2,9); }
+    function esc(s){ const d = document.createElement('div'); d.textContent = s==null?'':s; return d.innerHTML; }
+    function findCustomer(id){ return data.customers.find(c => c.id === id); }
+    function findMachine(cust, id){ return cust.machines.find(m => m.id === id); }
+
+    async function loadData(){
+      try{
+        const res = await fetch('./data.json?t=' + Date.now());
+        if(!res.ok) throw new Error('HTTP ' + res.status);
+        data = await res.json();
+      } catch(e){
+        contentEl.innerHTML = '';
+        contentEl.appendChild(emptyState('Nepodařilo se načíst data.json (' + e.message + '). Zkontroluj, že soubor leží vedle index.html.'));
+        return false;
+      }
+      return true;
+    }
+
+    function goto(view, customerId, machineId){
+      state = { view, customerId: customerId||null, machineId: machineId||null, search:'' };
+      searchBox.value = '';
+      render();
+      window.scrollTo({top:0, behavior:'instant'});
+    }
+
+    function renderCrumbs(){
+      crumbsEl.innerHTML = '';
+      const homeBtn = document.createElement('button');
+      homeBtn.textContent = 'Zákazníci';
+      homeBtn.onclick = () => goto('home');
+      crumbsEl.appendChild(homeBtn);
+      function sep(){ const s=document.createElement('span'); s.className='sep'; s.textContent='›'; return s; }
+      if(state.view === 'customer' || state.view === 'machine'){
+        const cust = findCustomer(state.customerId);
+        if(cust){
+          crumbsEl.appendChild(sep());
+          if(state.view === 'machine'){
+            const b = document.createElement('button');
+            b.textContent = cust.name;
+            b.onclick = () => goto('customer', cust.id);
+            crumbsEl.appendChild(b);
+          } else {
+            const s = document.createElement('span'); s.className='current'; s.textContent = cust.name;
+            crumbsEl.appendChild(s);
+          }
+        }
+      }
+      if(state.view === 'machine'){
+        const cust = findCustomer(state.customerId);
+        const m = cust && findMachine(cust, state.machineId);
+        if(m){
+          crumbsEl.appendChild(sep());
+          const s = document.createElement('span'); s.className='current'; s.textContent = m.name;
+          crumbsEl.appendChild(s);
+        }
+      }
+    }
+
+    function renderAdminBanner(){
+      if(!adminMode){ adminBanner.style.display = 'none'; return; }
+      adminBanner.style.display = 'block';
+      adminBanner.innerHTML = '';
+
+      const info = document.createElement('div');
+      info.textContent = 'Režim správy je zapnutý. Úpravy nejdřív uprav níže, pak klikni na „Uložit a publikovat pro všechny“ — jinak se změny neuloží pro ostatní.';
+      adminBanner.appendChild(info);
+
+      const cfgRow = document.createElement('div');
+      cfgRow.className = 'form-row';
+      cfgRow.style.marginTop = '10px';
+      const ownerInput = mkInput('GitHub uživatel/organizace', github.owner);
+      const repoInput = mkInput('Název repozitáře', github.repo);
+      const tokenInput = mkInput('GitHub token (jen pro tuto relaci)', github.token, 'password');
+      cfgRow.append(ownerInput, repoInput, tokenInput);
+      adminBanner.appendChild(cfgRow);
+
+      const btnRow = document.createElement('div');
+      btnRow.className = 'form-row';
+      const saveBtn = document.createElement('button');
+      saveBtn.className = 'btn-accent';
+      saveBtn.textContent = 'Uložit a publikovat pro všechny';
+      saveBtn.onclick = () => publish(ownerInput.value.trim(), repoInput.value.trim(), tokenInput.value.trim(), statusLine);
+      btnRow.appendChild(saveBtn);
+      adminBanner.appendChild(btnRow);
+
+      const statusLine = document.createElement('div');
+      statusLine.className = 'status-line';
+      adminBanner.appendChild(statusLine);
+
+      function mkInput(placeholder, val, type){
+        const i = document.createElement('input');
+        i.placeholder = placeholder;
+        i.value = val || '';
+        if(type) i.type = type;
+        i.oninput = () => {
+          github.owner = ownerInput.value.trim();
+          github.repo = repoInput.value.trim();
+          github.token = tokenInput.value.trim();
+          sessionStorage.setItem('sn_gh_cfg', JSON.stringify({owner: github.owner, repo: github.repo}));
+        };
+        return i;
+      }
+    }
+
+    async function publish(owner, repo, token, statusEl){
+      if(!owner || !repo || !token){
+        statusEl.textContent = 'Vyplň GitHub uživatele, repozitář i token.';
+        statusEl.className = 'status-line status-err';
+        return;
+      }
+      statusEl.textContent = 'Ukládám…';
+      statusEl.className = 'status-line';
+      const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${github.path}`;
+      try{
+        const getRes = await fetch(apiUrl, { headers: { Authorization: 'token ' + token, Accept: 'application/vnd.github+json' } });
+        if(!getRes.ok) throw new Error('Nelze najít soubor (HTTP ' + getRes.status + ')');
+        const getJson = await getRes.json();
+        const content = JSON.stringify(data, null, 2);
+        const b64 = btoa(unescape(encodeURIComponent(content)));
+        const putRes = await fetch(apiUrl, {
+          method: 'PUT',
+          headers: { Authorization: 'token ' + token, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: 'Aktualizace dat servisního navigátoru — ' + new Date().toISOString(),
+            content: b64,
+            sha: getJson.sha
+          })
+        });
+        if(!putRes.ok){
+          const errJson = await putRes.json().catch(() => ({}));
+          throw new Error(errJson.message || ('HTTP ' + putRes.status));
+        }
+        statusEl.textContent = 'Uloženo a publikováno. Ostatní to uvidí po obnovení stránky.';
+        statusEl.className = 'status-line status-ok';
+      } catch(e){
+        statusEl.textContent = 'Chyba: ' + e.message;
+        statusEl.className = 'status-line status-err';
+      }
+    }
+
+    function render(){
+      renderCrumbs();
+      renderAdminBanner();
+      if(state.view === 'home') renderHome();
+      else if(state.view === 'customer') renderCustomer();
+      else if(state.view === 'machine') renderMachine();
+    }
+
+    function renderHome(){
+      headerSub.textContent = 'Vyber zákazníka';
+      contentEl.innerHTML = '';
+      if(adminMode){
+        contentEl.appendChild(buildAddPanel('Přidat zákazníka', ['Název zákazníka'], (vals) => {
+          data.customers.push({ id: uid('c'), name: vals[0], machines: [] });
+          render();
+        }));
+      }
+      const q = state.search.trim().toLowerCase();
+      let list = data.customers;
+      if(q) list = data.customers.filter(c => c.name.toLowerCase().includes(q) || c.machines.some(m => m.name.toLowerCase().includes(q)));
+      if(list.length === 0){
+        contentEl.appendChild(emptyState(q ? 'Žádný zákazník ani zařízení tomu neodpovídá.' : 'Zatím tu není žádný zákazník.'));
+        return;
+      }
+      const grid = document.createElement('div');
+      grid.className = 'grid';
+      list.forEach(c => {
+        const tile = document.createElement('div');
+        tile.className = 'tile';
+        tile.innerHTML = `<div class="tile-name">${esc(c.name)}</div><div class="tile-meta">${c.machines.length} zařízení</div>`;
+        tile.addEventListener('click', (e) => { if(!e.target.closest('.tile-edit-row')) goto('customer', c.id); });
+        if(adminMode) tile.appendChild(editRow(
+          () => { const name = prompt('Nový název zákazníka:', c.name); if(name && name.trim()){ c.name = name.trim(); render(); } },
+          () => { if(confirm('Smazat zákazníka „' + c.name + '“ včetně všech zařízení a odkazů?')){ data.customers = data.customers.filter(x => x.id !== c.id); render(); } }
+        ));
+        grid.appendChild(tile);
+      });
+      contentEl.appendChild(grid);
+    }
+
+    function renderCustomer(){
+      const cust = findCustomer(state.customerId);
+      if(!cust){ goto('home'); return; }
+      headerSub.textContent = cust.name + ' — vyber zařízení';
+      contentEl.innerHTML = '';
+      if(adminMode){
+        contentEl.appendChild(buildAddPanel('Přidat zařízení', ['Název / model zařízení'], (vals) => {
+          cust.machines.push({ id: uid('m'), name: vals[0], docs: [] });
+          render();
+        }));
+      }
+      const q = state.search.trim().toLowerCase();
+      let list = cust.machines;
+      if(q) list = cust.machines.filter(m => m.name.toLowerCase().includes(q));
+      if(list.length === 0){
+        contentEl.appendChild(emptyState(q ? 'Žádné zařízení tomu neodpovídá.' : 'Tento zákazník zatím nemá žádné zařízení.'));
+        return;
+      }
+      const grid = document.createElement('div');
+      grid.className = 'grid';
+      list.forEach(m => {
+        const tile = document.createElement('div');
+        tile.className = 'tile';
+        tile.innerHTML = `<div class="tile-name">${esc(m.name)}</div><div class="tile-meta">${m.docs.length} položek</div>`;
+        tile.addEventListener('click', (e) => { if(!e.target.closest('.tile-edit-row')) goto('machine', cust.id, m.id); });
+        if(adminMode) tile.appendChild(editRow(
+          () => { const name = prompt('Nový název zařízení:', m.name); if(name && name.trim()){ m.name = name.trim(); render(); } },
+          () => { if(confirm('Smazat zařízení „' + m.name + '“ včetně všech odkazů?')){ cust.machines = cust.machines.filter(x => x.id !== m.id); render(); } }
+        ));
+        grid.appendChild(tile);
+      });
+      contentEl.appendChild(grid);
+    }
+
+    function renderMachine(){
+      const cust = findCustomer(state.customerId);
+      const m = cust && findMachine(cust, state.machineId);
+      if(!cust || !m){ goto('home'); return; }
+      headerSub.textContent = cust.name + ' / ' + m.name;
+      contentEl.innerHTML = '';
+      if(adminMode) contentEl.appendChild(buildAddDocPanel(m));
+      if(m.docs.length === 0){
+        contentEl.appendChild(emptyState('Zatím tu nejsou žádné odkazy.'));
+        return;
+      }
+      const wrap = document.createElement('div');
+      wrap.className = 'doc-list';
+      const tagLabel = { manual:'Manuál', software:'Software', other:'Ostatní' };
+      m.docs.forEach(d => {
+        const row = document.createElement('div');
+        row.className = 'doc-row';
+        row.innerHTML = `
+          <span class="doc-tag tag-${esc(d.type)}">${esc(tagLabel[d.type] || 'Ostatní')}</span>
+          <span class="doc-label">${esc(d.label)}</span>
+          <a class="doc-link" href="${esc(d.url)}" target="_blank" rel="noopener">Otevřít na OneDrive</a>
+        `;
+        if(adminMode){
+          const actions = document.createElement('div');
+          actions.className = 'doc-actions';
+          const editBtn = document.createElement('button');
+          editBtn.className = 'btn-outline btn-small'; editBtn.textContent = 'Upravit';
+          editBtn.onclick = () => {
+            const label = prompt('Popis položky:', d.label); if(label === null) return;
+            const url = prompt('Odkaz na OneDrive:', d.url); if(url === null) return;
+            d.label = label.trim() || d.label; d.url = url.trim() || d.url; render();
+          };
+          const delBtn = document.createElement('button');
+          delBtn.className = 'btn-danger btn-small'; delBtn.textContent = 'Smazat';
+          delBtn.onclick = () => { if(confirm('Smazat položku „' + d.label + '“?')){ m.docs = m.docs.filter(x => x.id !== d.id); render(); } };
+          actions.append(editBtn, delBtn);
+          row.appendChild(actions);
+        }
+        wrap.appendChild(row);
+      });
+      contentEl.appendChild(wrap);
+    }
+
+    function editRow(onRename, onDelete){
+      const row = document.createElement('div');
+      row.className = 'tile-edit-row';
+      const renameBtn = document.createElement('button');
+      renameBtn.className = 'btn-outline btn-small'; renameBtn.textContent = 'Přejmenovat';
+      renameBtn.onclick = (e) => { e.stopPropagation(); onRename(); };
+      const delBtn = document.createElement('button');
+      delBtn.className = 'btn-danger btn-small'; delBtn.textContent = 'Smazat';
+      delBtn.onclick = (e) => { e.stopPropagation(); onDelete(); };
+      row.append(renameBtn, delBtn);
+      return row;
+    }
+
+    function emptyState(text){ const d = document.createElement('div'); d.className = 'empty'; d.textContent = text; return d; }
+
+    function buildAddPanel(title, fieldLabels, onSubmit){
+      const panel = document.createElement('div');
+      panel.className = 'panel';
+      const h = document.createElement('h3'); h.textContent = title; panel.appendChild(h);
+      const row = document.createElement('div'); row.className = 'form-row';
+      const inputs = fieldLabels.map(lbl => { const inp = document.createElement('input'); inp.placeholder = lbl; row.appendChild(inp); return inp; });
+      const btn = document.createElement('button'); btn.className = 'btn-accent'; btn.textContent = 'Přidat';
+      btn.onclick = () => {
+        const vals = inputs.map(i => i.value.trim());
+        if(vals.some(v => !v)) return;
+        onSubmit(vals);
+        inputs.forEach(i => i.value = '');
+      };
+      row.appendChild(btn); panel.appendChild(row);
+      return panel;
+    }
+
+    function buildAddDocPanel(machine){
+      const panel = document.createElement('div');
+      panel.className = 'panel';
+      panel.innerHTML = `<h3>Přidat manuál / software / odkaz</h3>`;
+      const row = document.createElement('div'); row.className = 'form-row';
+      const labelInput = document.createElement('input'); labelInput.placeholder = 'Popis (např. „Servisní manuál“)';
+      const typeSelect = document.createElement('select');
+      typeSelect.innerHTML = `<option value="manual">Manuál</option><option value="software">Software</option><option value="other">Ostatní</option>`;
+      const urlInput = document.createElement('input'); urlInput.placeholder = 'Odkaz na OneDrive (https://…)';
+      const addBtn = document.createElement('button'); addBtn.className = 'btn-accent'; addBtn.textContent = 'Přidat';
+      addBtn.onclick = () => {
+        const label = labelInput.value.trim(); const url = urlInput.value.trim();
+        if(!label || !url) return;
+        machine.docs.push({ id: uid('d'), label, type: typeSelect.value, url });
+        render();
+      };
+      row.append(labelInput, typeSelect, urlInput, addBtn);
+      panel.appendChild(row);
+      return panel;
+    }
+
+    searchBox.addEventListener('input', () => { state.search = searchBox.value; render(); });
+
+    adminToggleBtn.addEventListener('click', async () => {
+      if(adminMode){
+        adminMode = false;
+        adminToggleBtn.textContent = 'Přihlásit správu';
+        render();
+        return;
+      }
+      const pw = prompt('Zadej admin heslo:');
+      if(pw === null) return;
+      const hash = await sha256(pw);
+      if(hash !== ADMIN_HASH){ alert('Špatné heslo.'); return; }
+      adminMode = true;
+      adminToggleBtn.textContent = 'Odhlásit správu';
+      render();
+    });
+
+    loadData().then(ok => { if(ok) render(); });
+  }
+})();
+</script>
+</body>
+</html>
