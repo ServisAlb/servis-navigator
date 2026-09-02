@@ -3,7 +3,26 @@
     {
       "id": "c_cs",
       "name": "Česká spořitelna",
-      "machines": []
+      "machines": [
+        {
+          "id": "m_4bw6tb7",
+          "name": "USF-51",
+          "docs": [
+            {
+              "id": "d_l7xbuaa",
+              "label": "Servisní manuál",
+              "type": "manual",
+              "url": "https://albaconcloud.sharepoint.com/:b:/g/IQD-KQJXuss1RLY5X3dfPS_6AVOY6hq6L1U16FhZRUKrfxE?e=wdzfbJ"
+            },
+            {
+              "id": "d_nclqdjw",
+              "label": "Template",
+              "type": "software",
+              "url": "https://albaconcloud.sharepoint.com/:u:/g/IQBPaIR6feKVQIsA_KyKZMlcARCpLx5uBiEWmFV6yBUc1vA?e=XQMH52"
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "c_csob",
