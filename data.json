@@ -33,7 +33,20 @@
     {
       "id": "c_fio",
       "name": "Fio banka",
-      "machines": []
+      "machines": [
+        {
+          "id": "m_up8yjey",
+          "name": "USF-51",
+          "docs": [
+            {
+              "id": "d_585eg7i",
+              "label": "Servisní manuál",
+              "type": "manual",
+              "url": "https://albaconcloud.sharepoint.com/:b:/g/IQD-KQJXuss1RLY5X3dfPS_6AVOY6hq6L1U16FhZRUKrfxE?e=wdzfbJ"
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "c_air",
