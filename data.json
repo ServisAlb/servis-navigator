@@ -91,6 +91,39 @@
       "id": "c_loomis",
       "name": "Loomis",
       "machines": []
+    },
+    {
+      "id": "c_glv0o70",
+      "name": "Billa",
+      "machines": [
+        {
+          "id": "m_hb556rm",
+          "name": "RCW-200 (CI-10X)",
+          "docs": []
+        },
+        {
+          "id": "m_75olr4u",
+          "name": "RBW-200 (CI-10X)",
+          "docs": [
+            {
+              "id": "d_mfrbijh",
+              "label": "Servisní manuál",
+              "type": "manual",
+              "url": "https://albaconcloud.sharepoint.com/:b:/g/IQC1zC1xhHsmQrcPGQIyMBmPARS01NsUsLLqorRCZLDlAqc?e=Y6WvP9"
+            }
+          ]
+        },
+        {
+          "id": "m_kxwioab",
+          "name": "SDRC-200 (CI-100X)",
+          "docs": []
+        },
+        {
+          "id": "m_u2t92za",
+          "name": "SDB-240 (CI-100X)",
+          "docs": []
+        }
+      ]
     }
   ]
 }
